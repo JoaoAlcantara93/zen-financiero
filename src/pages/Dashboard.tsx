@@ -17,6 +17,8 @@ interface Transaction {
   category: string;
   date: string;
   description: string | null;
+  frequency: "fixed" | "variable" | "future";
+  status: "pending" | "confirmed";
 }
 
 const Dashboard = () => {
@@ -64,15 +66,6 @@ const Dashboard = () => {
     navigate("/auth");
   };
 
-  const income = transactions
-    .filter((t) => t.type === "income")
-    .reduce((acc, t) => acc + Number(t.amount), 0);
-
-  const expense = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((acc, t) => acc + Number(t.amount), 0);
-
-  const balance = income - expense;
 
   if (loading) {
     return (
@@ -98,7 +91,7 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <FinancialSummary income={income} expense={expense} balance={balance} />
+        <FinancialSummary transactions={transactions} />
 
         <div className="grid gap-8 lg:grid-cols-2">
           <TransactionForm onSuccess={fetchTransactions} />

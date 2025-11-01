@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowDownCircle, ArrowUpCircle, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CheckCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,8 @@ interface Transaction {
   category: string;
   date: string;
   description: string | null;
+  frequency: "fixed" | "variable" | "future";
+  status: "pending" | "confirmed";
 }
 
 interface TransactionListProps {
@@ -31,18 +34,30 @@ interface TransactionListProps {
 }
 
 const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
-  const handleDelete = async (id: string) => {
+  const handleConfirm = async (id: string, type: "income" | "expense") => {
     try {
       const { error } = await supabase.from("transactions").delete().eq("id", id);
 
       if (error) throw error;
 
-      toast.success("Transação removida com sucesso!");
+      toast.success(type === "income" ? "✅ Recebimento confirmado!" : "✅ Pagamento confirmado!");
       onDelete();
     } catch (error: any) {
-      toast.error(error.message || "Erro ao remover transação");
+      toast.error(error.message || "Erro ao confirmar transação");
     }
   };
+
+  const getFrequencyBadge = (frequency: Transaction["frequency"]) => {
+    const badges = {
+      fixed: { label: "🔒 Fixo", variant: "default" as const },
+      variable: { label: "🎲 Variável", variant: "secondary" as const },
+      future: { label: "📅 Futuro", variant: "outline" as const },
+    };
+    return badges[frequency];
+  };
+
+  // Filtrar apenas transações pendentes
+  const pendingTransactions = transactions.filter(t => t.status === "pending");
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -64,13 +79,15 @@ const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {transactions.length === 0 ? (
+        {pendingTransactions.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            Nenhuma transação encontrada. Adicione sua primeira transação!
+            Nenhuma transação pendente. Todas as transações foram confirmadas! 🎉
           </p>
         ) : (
           <div className="space-y-3">
-            {transactions.map((transaction) => (
+            {pendingTransactions.map((transaction) => {
+              const frequencyBadge = getFrequencyBadge(transaction.frequency);
+              return (
               <div
                 key={transaction.id}
                 className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors border border-border"
@@ -87,8 +104,13 @@ const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
                       <ArrowDownCircle className="h-5 w-5 text-destructive" />
                     )}
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">{transaction.title}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-foreground">{transaction.title}</p>
+                      <Badge variant={frequencyBadge.variant} className="text-xs">
+                        {frequencyBadge.label}
+                      </Badge>
+                    </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>{transaction.category}</span>
                       <span>•</span>
@@ -110,31 +132,40 @@ const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
                   </span>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2 border-success text-success hover:bg-success hover:text-success-foreground"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Confirmar
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="bg-card border-border">
                       <AlertDialogHeader>
-                        <AlertDialogTitle className="text-foreground">Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogTitle className="text-foreground">
+                          Confirmar {transaction.type === "income" ? "recebimento" : "pagamento"}
+                        </AlertDialogTitle>
                         <AlertDialogDescription className="text-muted-foreground">
-                          Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.
+                          Ao confirmar, esta transação será removida da lista de pendentes. 
+                          Tem certeza que {transaction.type === "income" ? "recebeu" : "pagou"} <strong>{transaction.title}</strong>?
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(transaction.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() => handleConfirm(transaction.id, transaction.type)}
+                          className="bg-success text-success-foreground hover:bg-success/90"
                         >
-                          Excluir
+                          Sim, confirmar
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </CardContent>

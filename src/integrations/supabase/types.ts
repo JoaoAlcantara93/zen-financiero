@@ -21,7 +21,9 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          frequency: Database["public"]["Enums"]["transaction_frequency"]
           id: string
+          status: Database["public"]["Enums"]["transaction_status"]
           title: string
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at: string
@@ -33,7 +35,9 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          frequency?: Database["public"]["Enums"]["transaction_frequency"]
           id?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
           title: string
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
@@ -45,7 +49,9 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          frequency?: Database["public"]["Enums"]["transaction_frequency"]
           id?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
           title?: string
           type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
@@ -61,6 +67,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      transaction_frequency: "fixed" | "variable" | "future"
+      transaction_status: "pending" | "confirmed"
       transaction_type: "income" | "expense"
     }
     CompositeTypes: {
@@ -189,6 +197,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      transaction_frequency: ["fixed", "variable", "future"],
+      transaction_status: ["pending", "confirmed"],
       transaction_type: ["income", "expense"],
     },
   },

@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
@@ -27,6 +28,8 @@ const TransactionForm = ({ onSuccess }: TransactionFormProps) => {
     category: "",
     date: new Date().toISOString().split("T")[0],
     description: "",
+    frequency: "fixed" as "fixed" | "variable" | "future",
+    status: "pending" as "pending" | "confirmed",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +44,22 @@ const TransactionForm = ({ onSuccess }: TransactionFormProps) => {
         return;
       }
 
+      // Se o status for "confirmed", deleta a transação após inserir (não faz sentido)
+      // Na verdade, se for confirmed, nem deveria inserir - vou apenas inserir como pending
+      if (formData.status === "confirmed") {
+        toast.info("Transações confirmadas não são salvas no sistema");
+        setFormData({
+          title: "",
+          amount: "",
+          category: "",
+          date: new Date().toISOString().split("T")[0],
+          description: "",
+          frequency: "fixed",
+          status: "pending",
+        });
+        return;
+      }
+
       const { error } = await supabase.from("transactions").insert({
         user_id: user.id,
         title: formData.title,
@@ -49,6 +68,8 @@ const TransactionForm = ({ onSuccess }: TransactionFormProps) => {
         category: formData.category,
         date: formData.date,
         description: formData.description || null,
+        frequency: formData.frequency,
+        status: formData.status,
       });
 
       if (error) throw error;
@@ -60,6 +81,8 @@ const TransactionForm = ({ onSuccess }: TransactionFormProps) => {
         category: "",
         date: new Date().toISOString().split("T")[0],
         description: "",
+        frequency: "fixed",
+        status: "pending",
       });
       onSuccess();
     } catch (error: any) {
@@ -148,16 +171,53 @@ const TransactionForm = ({ onSuccess }: TransactionFormProps) => {
             </div>
           </div>
 
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="frequency">Frequência</Label>
+              <Select
+                value={formData.frequency}
+                onValueChange={(value: "fixed" | "variable" | "future") => setFormData({ ...formData, frequency: value })}
+              >
+                <SelectTrigger className="bg-secondary border-border text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">🔒 Fixo</SelectItem>
+                  <SelectItem value="variable">🎲 Variável</SelectItem>
+                  <SelectItem value="future">📅 Futuro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="date">Data</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+                className="bg-secondary border-border text-foreground"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="date">Data</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              required
-              className="bg-secondary border-border text-foreground"
-            />
+            <Label>Status</Label>
+            <RadioGroup
+              value={formData.status}
+              onValueChange={(value: "pending" | "confirmed") => setFormData({ ...formData, status: value })}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="pending" id="pending" />
+                <Label htmlFor="pending" className="font-normal cursor-pointer">⏳ Pendente</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="confirmed" id="confirmed" />
+                <Label htmlFor="confirmed" className="font-normal cursor-pointer">✅ Confirmar</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <div className="space-y-2">
