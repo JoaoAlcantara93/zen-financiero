@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 interface Transaction {
   type: "income" | "expense";
@@ -11,33 +11,40 @@ interface FinancialChartProps {
   transactions: Transaction[];
 }
 
+// Cores para as categorias (pode personalizar)
+const COLORS = [
+  '#0088FE', //teste
+  '#00C49F', '#FFBB28', '#FF8042', 
+  '#8884D8', '#82CA9D', '#FFC658', '#8DD1E1',
+  '#D084D0', '#FF7C7C', '#A4DE6C', '#D0D084'
+];
+
 const FinancialChart = ({ transactions }: FinancialChartProps) => {
+  // Agrupar por categoria para o gráfico de rosca
   const categoryData = transactions.reduce((acc, transaction) => {
-    const existing = acc.find((item) => item.category === transaction.category);
+    const existing = acc.find((item) => item.name === transaction.category);
     
     if (existing) {
-      if (transaction.type === "income") {
-        existing.income += transaction.amount;
-      } else {
-        existing.expense += transaction.amount;
-      }
+      existing.value += transaction.amount;
+      // Podemos também guardar o tipo para usar na legenda
+      existing.transactions = (existing.transactions || 0) + 1;
     } else {
       acc.push({
-        category: transaction.category,
-        income: transaction.type === "income" ? transaction.amount : 0,
-        expense: transaction.type === "expense" ? transaction.amount : 0,
+        name: transaction.category,
+        value: transaction.amount,
+        transactions: 1
       });
     }
     
     return acc;
-  }, [] as Array<{ category: string; income: number; expense: number }>);
+  }, [] as Array<{ name: string; value: number; transactions?: number }>);
 
   return (
     <Card className="border-border bg-card">
       <CardHeader>
-        <CardTitle className="text-foreground">Análise por Categoria</CardTitle>
+        <CardTitle className="text-foreground">Distribuição por Categoria</CardTitle>
         <CardDescription className="text-muted-foreground">
-          Visualize suas receitas e despesas por categoria
+          Visualize o total por categoria em formato de rosca
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -47,11 +54,34 @@ const FinancialChart = ({ transactions }: FinancialChartProps) => {
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={categoryData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="category" stroke="hsl(var(--muted-foreground))" />
-              <YAxis stroke="hsl(var(--muted-foreground))" />
+            <PieChart>
+              <Pie
+                data={categoryData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                // Opcional: mostrar labels nas fatias
+                label={({ name, percent }) => 
+                  `${name} (${(percent * 100).toFixed(0)}%)`
+                }
+                outerRadius={80}
+                innerRadius={60} // Isso cria o efeito "rosquinha"
+                fill="#8884d8"
+                dataKey="value"
+                nameKey="name"
+              >
+                {categoryData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={COLORS[index % COLORS.length]} 
+                  />
+                ))}
+              </Pie>
               <Tooltip
+                formatter={(value: number) => [
+                  `R$ ${value.toFixed(2)}`,
+                  'Valor'
+                ]}
                 contentStyle={{
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
@@ -60,9 +90,7 @@ const FinancialChart = ({ transactions }: FinancialChartProps) => {
                 }}
               />
               <Legend />
-              <Bar dataKey="income" fill="hsl(var(--chart-income))" name="Receitas" />
-              <Bar dataKey="expense" fill="hsl(var(--chart-expense))" name="Despesas" />
-            </BarChart>
+            </PieChart>
           </ResponsiveContainer>
         )}
       </CardContent>

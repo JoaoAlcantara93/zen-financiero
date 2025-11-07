@@ -94,8 +94,8 @@ const Dashboard = () => {
         <FinancialSummary transactions={transactions} />
 
         <div className="grid gap-8 lg:grid-cols-2">
-          <TransactionForm onSuccess={fetchTransactions} />
           <FinancialChart transactions={transactions} />
+          <TransactionForm onSuccess={fetchTransactions} />
         </div>
 
         <TransactionList transactions={transactions} onDelete={fetchTransactions} />

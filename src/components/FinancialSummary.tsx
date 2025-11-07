@@ -43,31 +43,10 @@ const FinancialSummary = ({ transactions }: FinancialSummaryProps) => {
 
   return (
     <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+     
       <Card className="border-border bg-card hover:bg-card/80 transition-colors">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">A Receber</CardTitle>
-          <ArrowUpCircle className="h-4 w-4 text-success" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-success">{formatCurrency(toReceive)}</div>
-          <p className="text-xs text-muted-foreground mt-1">Receitas pendentes</p>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border bg-card hover:bg-card/80 transition-colors">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">A Pagar</CardTitle>
-          <ArrowDownCircle className="h-4 w-4 text-destructive" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-destructive">{formatCurrency(toPay)}</div>
-          <p className="text-xs text-muted-foreground mt-1">Despesas pendentes</p>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border bg-card hover:bg-card/80 transition-colors">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Saldo Previsto</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Saldo </CardTitle>
           <DollarSign className="h-4 w-4 text-primary" />
         </CardHeader>
         <CardContent>
@@ -77,28 +56,7 @@ const FinancialSummary = ({ transactions }: FinancialSummaryProps) => {
           <p className="text-xs text-muted-foreground mt-1">A receber - A pagar</p>
         </CardContent>
       </Card>
-
-      <Card className="border-border bg-card hover:bg-card/80 transition-colors">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Receitas Fixas</CardTitle>
-          <Lock className="h-4 w-4 text-success" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-success">{formatCurrency(fixedIncome)}</div>
-          <p className="text-xs text-muted-foreground mt-1">Entradas fixas</p>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border bg-card hover:bg-card/80 transition-colors">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Despesas Fixas</CardTitle>
-          <Lock className="h-4 w-4 text-destructive" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-destructive">{formatCurrency(fixedExpense)}</div>
-          <p className="text-xs text-muted-foreground mt-1">Saídas fixas</p>
-        </CardContent>
-      </Card>
+      
     </div>
   );
 };
