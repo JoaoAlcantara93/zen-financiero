@@ -202,24 +202,7 @@ const TransactionForm = ({ onSuccess }: TransactionFormProps) => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <RadioGroup
-              value={formData.status}
-              onValueChange={(value: "pending" | "confirmed") => setFormData({ ...formData, status: value })}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="pending" id="pending" />
-                <Label htmlFor="pending" className="font-normal cursor-pointer">⏳ Pendente</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="confirmed" id="confirmed" />
-                <Label htmlFor="confirmed" className="font-normal cursor-pointer">✅ Confirmar</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
+          
           <div className="space-y-2">
             <Label htmlFor="description">Descrição (opcional)</Label>
             <Textarea
