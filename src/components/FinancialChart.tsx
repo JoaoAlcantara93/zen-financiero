@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { useState } from "react";
 
 interface Transaction {
   type: "income" | "expense";
@@ -11,33 +12,77 @@ interface FinancialChartProps {
   transactions: Transaction[];
 }
 
-// Cores para as categorias (pode personalizar)
-const COLORS = [
-  '#0088FE', //teste
-  '#00C49F', '#FFBB28', '#FF8042', 
-  '#8884D8', '#82CA9D', '#FFC658', '#8DD1E1',
-  '#D084D0', '#FF7C7C', '#A4DE6C', '#D0D084'
-];
+// Custom Tooltip component
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background border border-border rounded-lg shadow-lg p-3">
+        <p className="text-foreground font-medium">{payload[0].name}</p>
+        <p className="text-foreground">
+          Valor: <span className="text-primary">R$ {payload[0].value.toFixed(2)}</span>
+        </p>
+        <p className="text-muted-foreground text-sm">
+          {((payload[0].payload.percent || 0) * 100).toFixed(1)}% do total
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Cores para as categorias
+const RENDA_CORES = ['#00C49F', '#82CA9D', '#A4DE6C', '#08851B', '#00C49F', '#82CA9D'];
+const GASTOS_CORES = ['#FF4444', '#FF8E8E', '#FFAAAA', '#FF7C7C', '#FF5757', '#FF6B6B'];
 
 const FinancialChart = ({ transactions }: FinancialChartProps) => {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Separar transações por tipo
+  const incomeTransactions = transactions.filter(t => t.type === "income");
+  const expenseTransactions = transactions.filter(t => t.type === "expense");
+
   // Agrupar por categoria para o gráfico de rosca
   const categoryData = transactions.reduce((acc, transaction) => {
     const existing = acc.find((item) => item.name === transaction.category);
     
     if (existing) {
-      existing.value += transaction.amount;
-      // Podemos também guardar o tipo para usar na legenda
+      existing.value += Math.abs(transaction.amount);
       existing.transactions = (existing.transactions || 0) + 1;
     } else {
       acc.push({
         name: transaction.category,
-        value: transaction.amount,
+        value: Math.abs(transaction.amount),
+        type: transaction.type, // Manter o tipo para aplicar as cores corretas
         transactions: 1
       });
     }
     
     return acc;
-  }, [] as Array<{ name: string; value: number; transactions?: number }>);
+  }, [] as Array<{ name: string; value: number; type: string; transactions?: number }>);
+
+  // Calcular percentuais
+  const total = categoryData.reduce((sum, item) => sum + item.value, 0);
+  const dataWithPercent = categoryData.map(item => ({
+    ...item,
+    percent: item.value / total
+  }));
+
+  // Função para obter a cor baseada no tipo da transação
+  const getColorForCategory = (categoryType: string, index: number) => {
+    if (categoryType === "income") {
+      return RENDA_CORES[index % RENDA_CORES.length];
+    } else {
+      return GASTOS_CORES[index % GASTOS_CORES.length];
+    }
+  };
+
+  const onPieEnter = (_: any, index: number) => {
+    setActiveIndex(index);
+  };
+
+  const onPieLeave = () => {
+    setActiveIndex(null);
+  };
 
   return (
     <Card className="border-border bg-card">
@@ -56,7 +101,7 @@ const FinancialChart = ({ transactions }: FinancialChartProps) => {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={categoryData}
+                data={dataWithPercent}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -66,30 +111,35 @@ const FinancialChart = ({ transactions }: FinancialChartProps) => {
                 }
                 outerRadius={80}
                 innerRadius={60} // Isso cria o efeito "rosquinha"
-                fill="#8884d8"
                 dataKey="value"
                 nameKey="name"
+                onMouseEnter={onPieEnter}
+                onMouseLeave={onPieLeave}
+                activeIndex={activeIndex ?? undefined}
+                activeShape={{
+                  stroke: "hsl(var(--border))",
+                  strokeWidth: 2,
+                }}
               >
-                {categoryData.map((entry, index) => (
+                {dataWithPercent.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]} 
+                    fill={getColorForCategory(entry.type, index)} 
+                    opacity={activeIndex === index ? 1 : 0.8}
                   />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value: number) => [
-                  `R$ ${value.toFixed(2)}`,
-                  'Valor'
-                ]}
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "0.5rem",
-                  color: "hsl(var(--foreground))",
-                }}
+              
+              {/* Usando o CustomTooltip para evitar o fundo preto */}
+              <Tooltip content={<CustomTooltip />} />
+              
+              <Legend 
+                formatter={(value, entry: any) => (
+                  <span style={{ color: 'hsl(var(--foreground))' }}>
+                    {value}
+                  </span>
+                )}
               />
-              <Legend />
             </PieChart>
           </ResponsiveContainer>
         )}
